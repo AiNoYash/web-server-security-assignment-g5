@@ -1,0 +1,10 @@
+# Ignore node_modules in the root and in ALL subfolders (for your friends' parts)
+node_modules/
+**/node_modules/
+
+# Ignore environment variables (if anyone uses them for secrets later)
+.env
+
+# Ignore OS system files
+.DS_Store
+Thumbs.db

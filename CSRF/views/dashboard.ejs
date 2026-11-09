@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bank Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; color: #333; }
+        .navbar { background-color: #0056b3; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar h2 { margin: 0; }
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .balance-card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; margin-bottom: 30px; }
+        .balance-card h1 { margin: 0; font-size: 2.5em; color: #28a745; }
+        .transfer-section { display: flex; gap: 20px; }
+        .transfer-card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; border-top: 4px solid #dc3545; }
+        .transfer-card.safe { border-top-color: #28a745; }
+        .transfer-card h3 { margin-top: 0; color: #dc3545; }
+        .transfer-card.safe h3 { color: #28a745; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #0056b3; color: white; border: none; padding: 10px 15px; width: 100%; border-radius: 4px; cursor: pointer; font-size: 1em; }
+        button:hover { background-color: #004494; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h2>SecureBank</h2>
+        <span>Welcome, <%= user %>! | <a href="/" style="color: white; text-decoration: none;">Logout</a></span>
+    </div>
+
+    <div class="container">
+        <div class="balance-card">
+            <p style="margin-top:0; color: #666; font-size: 1.2em;">Current Balance</p>
+            <h1>$<%= balance %></h1>
+        </div>
+        
+        <div class="transfer-section">
+            <!-- UNSAFE FORM -->
+            <div class="transfer-card">
+                <h3>Transfer (Unsafe Mode)</h3>
+                <p style="font-size: 0.9em; color: #666;">No CSRF protection.</p>
+                <form action="/transfer/unsafe" method="POST">
+                    <label>To Account:</label>
+                    <input type="text" name="to" placeholder="e.g., Alice" required>
+                    <label>Amount:</label>
+                    <input type="number" name="amount" placeholder="100" required>
+                    <button type="submit">Send Unsafe</button>
+                </form>
+            </div>
+
+            <!-- SAFE FORM -->
+            <div class="transfer-card safe">
+                <h3>Transfer (Safe Mode)</h3>
+                <p style="font-size: 0.9em; color: #666;">Synchronizer Token active.</p>
+                <form action="/transfer/safe" method="POST">
+                    <input type="hidden" name="csrfToken" value="<%= csrfToken %>">
+                    <label>To Account:</label>
+                    <input type="text" name="to" placeholder="e.g., Bob" required>
+                    <label>Amount:</label>
+                    <input type="number" name="amount" placeholder="100" required>
+                    <button type="submit" style="background-color: #28a745;">Send Safely</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
