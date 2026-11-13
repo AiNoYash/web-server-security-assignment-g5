@@ -87,9 +87,6 @@ app.get('/', (req, res) => {
                     <textarea name="text" rows="3" required placeholder="Enter review or XSS payload..."></textarea>
                     <button type="submit">Post Review</button>
                 </form>
-                <div style="margin-top: 0.75rem; font-size: 0.85rem; color: #475569;">
-                    <strong>Test Payload:</strong> <code>&lt;img src="x" onerror="alert('Stored XSS! Stolen Cookie: ' + document.cookie)"&gt;</code>
-                </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
