@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Injection Laboratory | Variant 1: Authentication Bypass</title>
+  
+  <!-- Modular Stylesheets (Clean Light Theme) -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-left">
+        <h1>
+          <span>SQL Injection Laboratory</span>
+          <span class="lab-tag">Variant 1: Authentication Bypass</span>
+        </h1>
+        <p>Demonstration of SQL Injection authentication bypass via string formatting versus Parameterized Query mitigation.</p>
+      </div>
+      <div class="header-meta">
+        <div class="badge-author">
+          Student: <strong>Tanishq Garg</strong> (IIT2024038)
+        </div>
+        <button type="button" class="btn-reset" id="btnResetDb">
+          <span>Reset Database</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Quick Presets Toolbar for Live Viva -->
+    <section class="presets-card" aria-labelledby="presetsHeading">
+      <div class="presets-header">
+        <h2 id="presetsHeading">Pre-Configured Test Payloads</h2>
+        <span style="font-size: 0.78rem; color: var(--text-muted);">Select a scenario to populate form fields</span>
+      </div>
+      <div class="preset-chips">
+        <button type="button" class="chip-btn" onclick="App.loadPayload('alice', 'alice123', 'Legitimate User (Alice)')">
+          <span>Alice (User)</span>
+          <code>alice / alice123</code>
+        </button>
+        <button type="button" class="chip-btn" onclick="App.loadPayload('admin', 'Sup3rS3cr3tAdmin!2026', 'Legitimate Admin')">
+          <span>Admin (Administrator)</span>
+          <code>admin / Sup3r...</code>
+        </button>
+        <button type="button" class="chip-btn" onclick="App.loadPayload(&quot;admin' --&quot;, 'irrelevant_password', 'Comment Truncation')">
+          <span>Comment Truncation</span>
+          <code>admin' --</code>
+        </button>
+        <button type="button" class="chip-btn" onclick="App.loadPayload(&quot;' OR '1'='1&quot;, &quot;' OR '1'='1&quot;, 'Boolean Tautology')">
+          <span>Boolean Tautology</span>
+          <code>' OR '1'='1</code>
+        </button>
+        <button type="button" class="chip-btn" onclick="App.loadPayload(&quot;' OR 1=1 --&quot;, 'dummy', 'Tautology with Comment')">
+          <span>Tautology with Comment</span>
+          <code>' OR 1=1 --</code>
+        </button>
+        <button type="button" class="chip-btn" onclick="App.loadPayload(&quot;admin'&quot;, &quot;password&quot;, 'Syntax Error Test')">
+          <span>Syntax Error Test</span>
+          <code>admin'</code>
+        </button>
+      </div>
+    </section>
+
+    <!-- Simultaneous Test Action -->
+    <div class="btn-both-container">
+      <button type="button" class="btn-both" id="btnTestBoth">
+        <span>Execute Both Endpoints Simultaneously (Comparison)</span>
+      </button>
+    </div>
+
+    <!-- Two-Column Side-by-Side Comparison -->
+    <main class="comparison-grid">
+      <!-- Left Column: Vulnerable Route -->
+      <section class="module-card vulnerable" aria-labelledby="vulnTitle">
+        <div class="module-header">
+          <div>
+            <h2 class="module-title" id="vulnTitle">Vulnerable Endpoint</h2>
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 2px;">
+              POST /login/vulnerable
+            </div>
+          </div>
+          <span class="badge-vuln">Vulnerable (F-String)</span>
+        </div>
+
+        <div class="code-snippet-title">Vulnerable Source (main.py: Line 120)</div>
+        <div class="code-snippet">
+          <span class="code-lineno">120</span>query = f"SELECT ... WHERE username = '<span class="highlight">{payload.username}</span>' AND password = '<span class="highlight">{payload.password}</span>'"<br>
+          <span class="code-lineno">128</span>cursor.execute(query)
+        </div>
+
+        <form id="vulnForm">
+          <div class="form-group">
+            <label for="vulnUsername">Username (Inject Attack Payload Here)</label>
+            <input type="text" id="vulnUsername" class="form-control" value="admin' --" required autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="vulnPassword">Password</label>
+            <input type="text" id="vulnPassword" class="form-control" value="anything" autocomplete="off" />
+          </div>
+          <button type="submit" class="btn-submit btn-vuln">
+            <span>Execute Attack on /login/vulnerable</span>
+          </button>
+        </form>
+
+        <!-- Live In-Panel Attack Outcome -->
+        <div class="panel-result" id="vulnPanelResult" style="display: none;">
+          <div class="panel-result-header">
+            <span class="panel-result-tag" id="vulnResultTag">Result</span>
+            <span class="panel-result-latency" id="vulnLatency"></span>
+          </div>
+          <div class="panel-result-body" id="vulnResultBody"></div>
+          <div class="panel-result-sql">
+            <div class="panel-sql-label">Constructed SQL Query (Raw SQLite Execution):</div>
+            <code id="vulnExecutedSql"></code>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Mitigated Route -->
+      <section class="module-card secure" aria-labelledby="secTitle">
+        <div class="module-header">
+          <div>
+            <h2 class="module-title" id="secTitle">Mitigated Endpoint</h2>
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 2px;">
+              POST /login/secure
+            </div>
+          </div>
+          <span class="badge-sec">Secure (Parameterized)</span>
+        </div>
+
+        <div class="code-snippet-title">Mitigated Source (main.py: Line 178 - Changed Line)</div>
+        <div class="code-snippet">
+          <span class="code-lineno">178</span>query_template = "SELECT ... WHERE username = <span class="highlight-sec">?</span> AND password = <span class="highlight-sec">?</span>"<br>
+          <span class="code-lineno">184</span>cursor.execute(query_template, (<span class="highlight-sec">payload.username, payload.password</span>))
+        </div>
+
+        <form id="secForm">
+          <div class="form-group">
+            <label for="secUsername">Username (Test Same Payload)</label>
+            <input type="text" id="secUsername" class="form-control" value="admin' --" required autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="secPassword">Password</label>
+            <input type="text" id="secPassword" class="form-control" value="anything" autocomplete="off" />
+          </div>
+          <button type="submit" class="btn-submit btn-sec">
+            <span>Test Defense on /login/secure</span>
+          </button>
+        </form>
+
+        <!-- Live In-Panel Defense Outcome -->
+        <div class="panel-result" id="secPanelResult" style="display: none;">
+          <div class="panel-result-header">
+            <span class="panel-result-tag" id="secResultTag">Result</span>
+            <span class="panel-result-latency" id="secLatency"></span>
+          </div>
+          <div class="panel-result-body" id="secResultBody"></div>
+          <div class="panel-result-sql">
+            <div class="panel-sql-label">Pre-Compiled Query Template:</div>
+            <code id="secExecutedSql"></code>
+            <div class="panel-sql-label" style="margin-top: 6px;">Safely Bound Data Literals:</div>
+            <code id="secBoundParams"></code>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Line-by-Line Code Mitigation Diff Card -->
+    <section class="code-diff-card" aria-labelledby="diffHeading">
+      <div class="diff-header">
+        <h2 id="diffHeading">Code Mitigation Inspector: Exact Line Modification</h2>
+        <span class="diff-badge">Security Patch Diff</span>
+      </div>
+      <p class="diff-desc">
+        Compare the exact code line modified in <code>main.py</code>. Notice how parameterized placeholders (<code>?</code>) eliminate raw string interpolation, making SQL injection impossible regardless of attacker input.
+      </p>
+      <div class="diff-grid">
+        <div class="diff-pane diff-vuln">
+          <div class="diff-pane-title">BEFORE: Flawed Code (main.py: Lines 120-128)</div>
+          <pre class="diff-code"><code><span class="diff-del">- # Flawed: Direct string concatenation merges code with data</span>
+<span class="diff-del">- query = (</span>
+<span class="diff-del">-     f"SELECT id, username, role FROM users "</span>
+<span class="diff-del">-     f"WHERE username = '{payload.username}' AND password = '{payload.password}'"</span>
+<span class="diff-del">- )</span>
+<span class="diff-del">- cursor.execute(query)</span></code></pre>
+          <div class="diff-note">
+            <strong>Vulnerability:</strong> Single quotes (<code>'</code>) terminate the string literal early. Input tokens are parsed as SQL commands (<code>OR</code>) or comments (<code>--</code>), altering the SQL query structure.
+          </div>
+        </div>
+
+        <div class="diff-pane diff-secure">
+          <div class="diff-pane-title">AFTER: Mitigated Code (main.py: Lines 178-184)</div>
+          <pre class="diff-code"><code><span class="diff-add">+ # Fixed: Parameterized query isolates user input as literal data</span>
+<span class="diff-add">+ query_template = "SELECT id, username, role FROM users WHERE username = ? AND password = ?"</span>
+<span class="diff-add">+ cursor.execute(query_template, (payload.username, payload.password))</span></code></pre>
+          <div class="diff-note">
+            <strong>Mitigation:</strong> The database engine pre-compiles the SQL syntax tree. User values are bound strictly as data literals in the second parameter. They can never be executed as SQL commands.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Execution Inspector Panel -->
+    <section class="inspector-card" id="inspectorCard" aria-labelledby="inspectorHeading">
+      <div class="inspector-title">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h2 id="inspectorHeading">Execution Inspector</h2>
+          <span class="live-indicator">Live</span>
+        </div>
+        <div class="inspector-actions">
+          <button type="button" class="btn-copy-curl" id="btnCopyCurl" onclick="InspectorModule.copyCurl()" style="display: none;">
+            Copy cURL Command
+          </button>
+          <span id="inspectModeBadge" class="mode-indicator">Waiting for submission</span>
+        </div>
+      </div>
+
+      <!-- Status Result Banner -->
+      <div id="statusBanner" class="status-banner idle">
+        <div class="status-left">
+          <div class="status-pill-prefix" id="statusPrefix">IDLE</div>
+          <div class="status-text">
+            <h3 id="statusTitle">Awaiting Submission</h3>
+            <p id="statusDesc">Submit either form above or select a preset to observe backend query construction and authentication outcome.</p>
+          </div>
+        </div>
+        <div class="status-badges" id="statusBadges"></div>
+      </div>
+
+      <!-- SQL Query Executed Block -->
+      <div class="inspector-block">
+        <div class="inspector-block-header">
+          <span>Executed SQL Statement</span>
+          <span id="execLatency" style="font-family: var(--font-mono); color: #38bdf8;"></span>
+        </div>
+        <div class="sql-display" id="sqlDisplay">-- No query executed yet.</div>
+        <div class="params-list" id="paramsDisplay" style="display: none;"></div>
+      </div>
+
+      <!-- Raw HTTP Wire Details -->
+      <details class="wire-details">
+        <summary>View Raw HTTP Response Data</summary>
+        <pre class="raw-json" id="rawJsonResponse">// Raw JSON response output will appear here</pre>
+      </details>
+    </section>
+
+    <!-- Educational & Viva Reference Section -->
+    <footer class="edu-section" aria-labelledby="eduHeading">
+      <h2 id="eduHeading">Security Analysis & Viva Reference</h2>
+      <div class="edu-grid">
+        <article class="edu-card">
+          <h3>Root Cause (Vulnerable Route)</h3>
+          <p>
+            User input is concatenated directly into the SQL command text via Python f-strings. A single quote (<code>'</code>) inside user input terminates the string literal early, allowing input tokens to be parsed as SQL keywords (<code>OR</code>), tautologies (<code>'1'='1'</code>), or comment markers (<code>--</code>).
+          </p>
+        </article>
+
+        <article class="edu-card">
+          <h3>Implemented Mitigation (Secure Route)</h3>
+          <p>
+            Parameterized queries with <code>?</code> placeholders enforce compile-time separation between code and data. The database engine compiles the query syntax tree beforehand; user inputs are bound strictly as data literals and cannot alter the query structure.
+          </p>
+        </article>
+
+        <article class="edu-card">
+          <h3>Error-Based Information Leakage</h3>
+          <p>
+            Entering a trailing single quote (<code>admin'</code>) in the vulnerable endpoint triggers a raw SQLite syntax error (HTTP 400). Exposing raw database exceptions reveals underlying schema and engine information to clients (CWE-209).
+          </p>
+        </article>
+      </div>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Modular JavaScript Modules -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/inspector.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
