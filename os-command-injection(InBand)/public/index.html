@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OS Command Injection Lab</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="eyebrow">CYBER SECURITY · WEB SERVER SECURITY</div>
+      <h1>OS Command Injection Lab</h1>
+      <p>In-band command injection — vulnerable behaviour, exploit evidence, and mitigation.</p>
+      <div class="local-note">LOCAL EDUCATIONAL LAB · LISTENING ON 127.0.0.1 ONLY</div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <span class="step">01 / VULNERABLE</span>
+          <h2>Network diagnostics</h2>
+          <p>The server places the supplied value into a shell command using <code>exec()</code>.</p>
+        </div>
+        <span class="tag danger">Intentionally vulnerable</span>
+      </div>
+      <label for="vuln-ip">Input</label>
+      <input id="vuln-ip" autocomplete="off" value="127.0.0.1">
+      <div class="hint" id="payload-hint"></div>
+      <button class="danger-button" id="run-vulnerable">Run vulnerable check</button>
+      <pre class="output" id="vuln-output">Output will appear here…</pre>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <span class="step">02 / MITIGATED</span>
+          <h2>Secured network diagnostics</h2>
+          <p>The server validates an IPv4 address and calls <code>execFile()</code> with separate arguments.</p>
+        </div>
+        <span class="tag safe">Mitigated</span>
+      </div>
+      <label for="secure-ip">Input</label>
+      <input id="secure-ip" autocomplete="off" value="127.0.0.1">
+      <div class="hint">Try the same test string here. It should be rejected before execution.</div>
+      <button class="safe-button" id="run-secure">Run secured check</button>
+      <pre class="output" id="secure-output">Output will appear here…</pre>
+    </section>
+
+    <section class="explain">
+      <h2>What to observe</h2>
+      <ul>
+        <li><b>Vulnerable route:</b> user input is concatenated into a shell command.</li>
+        <li><b>Exploit:</b> a command separator can make the shell execute an additional command.</li>
+        <li><b>Secured route:</b> invalid input is rejected, and process execution does not use a shell.</li>
+      </ul>
+      <p class="foot">Use only on this local application. Never expose the vulnerable route publicly or test systems you do not own.</p>
+    </section>
+    <footer>Coursework demonstration · In-band OS command injection</footer>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
